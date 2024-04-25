@@ -11,6 +11,7 @@ class Comm {
         void registerNotification();
         static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
         static void printTemperatureAndHumidity();
+        void sendMQTT(const char* topic);
         static float lastTemperature;
         static float lastHumidity;
         static bool newTemperatureReceived;
@@ -24,6 +25,7 @@ class Comm {
         static BLEUUID serviceUUID;
         static BLEUUID tempCharUUID;
         static BLEUUID humCharUUID;
+        static const char* _topic;
 };
 
 #endif
