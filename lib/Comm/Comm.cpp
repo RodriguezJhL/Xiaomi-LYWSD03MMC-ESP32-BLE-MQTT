@@ -1,7 +1,11 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
 #include "Comm.h"
 
 extern BLEClient* pClient;
+extern PubSubClient mqttClient;
 
 float Comm::lastTemperature = 0.0f;
 float Comm::lastHumidity = 0.0f;
@@ -9,6 +13,7 @@ bool Comm::newTemperatureReceived = false;
 bool Comm::newHumidityReceived = false;
 bool Comm::dataReceived = false;
 const char* Comm::sensorId = nullptr;
+const char* Comm::_topic = nullptr;
 
 BLEUUID Comm::serviceUUID;
 BLEUUID Comm::tempCharUUID;
@@ -71,11 +76,26 @@ void Comm::notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uin
     }
 }
 
-
 void Comm::printTemperatureAndHumidity() { // Método para imprimir las lecturas de temperatura y humedad
 
     Serial.printf("Temperature = %.1f °C : Humidity = %.1f %%\n", lastTemperature, lastHumidity);
     Serial.println("");
+
+    newTemperatureReceived = false;
+    newHumidityReceived = false;
+}
+
+void Comm::sendMQTT(const char* topic) { // Method to send temperature and humidity readings by mqtt
+
+    JsonDocument doc; //Json para enviar (Almacena el formato Json)
+    char Json[64]; // Variable para almacenar el Json serializado a enviar
+
+    doc["Temperature(°C)"] = roundf(lastTemperature* 100.0)/100.0; // Guardar la lectura de temperatura en formato Json
+    doc["Humidity(%)"] = roundf(lastHumidity* 10.0)/10.0; // Guardar la lectura de humedad en formato Json
+    serializeJson(doc, Json); // Para poder mandar el formato Json guardado en doc, se serializa y se guarda en la variable Json
+    mqttClient.publish(topic, Json); // Se publica el Json serializado
+    Serial.print("Json enviado: ");
+    Serial.println(Json); // Se imprime el Json enviado en el monitor serial
 
     newTemperatureReceived = false;
     newHumidityReceived = false;
